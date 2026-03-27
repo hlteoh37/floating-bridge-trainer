@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Layout } from './components/common/Layout.tsx';
 import { NavBar } from './components/common/NavBar.tsx';
+import { PlayPage } from './pages/PlayPage.tsx';
 
 type Page = 'play' | 'drills' | 'stats';
 
@@ -10,9 +11,9 @@ function App() {
     <Layout>
       <NavBar currentPage={page} onNavigate={setPage} />
       <main className="p-4">
-        {page === 'play' && <div>Play page placeholder</div>}
-        {page === 'drills' && <div>Drills page placeholder</div>}
-        {page === 'stats' && <div>Stats page placeholder</div>}
+        {page === 'play' && <PlayPage />}
+        {page === 'drills' && <div className="text-center py-12 text-gray-400">Drills coming soon</div>}
+        {page === 'stats' && <div className="text-center py-12 text-gray-400">Stats coming soon</div>}
       </main>
     </Layout>
   );
