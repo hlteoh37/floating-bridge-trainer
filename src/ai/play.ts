@@ -4,7 +4,7 @@ import type { CardTracker } from './inference.ts';
 import { RANK_VALUES } from '../engine/card.ts';
 import { getPlayableCards } from '../engine/tricks.ts';
 
-export function makeAIPlayDecision(hand: Card[], trick: Trick, contract: Contract, config: AIConfig, tracker: CardTracker, playerId: string): Card {
+export function makeAIPlayDecision(hand: Card[], trick: Trick, contract: Contract, config: AIConfig, _tracker: CardTracker, _playerId: string): Card {
   const isLeading = trick.cards.length === 0;
   const ledSuit = isLeading ? null : trick.ledSuit;
   const playable = getPlayableCards(hand, ledSuit);
