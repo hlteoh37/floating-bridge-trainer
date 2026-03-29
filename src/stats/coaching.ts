@@ -1,10 +1,11 @@
 import type { Card, Bid, Trick, TrumpChoice, Suit } from '../engine/types.ts';
 import type { CoachingAdvice } from './types.ts';
 import { evaluateHandStrength } from './hand-eval.ts';
+import { isValidBid } from '../engine/bidding.ts';
 import { getPlayableCards } from '../engine/tricks.ts';
 import { RANK_VALUES, cardToString } from '../engine/card.ts';
 
-export function getBiddingAdvice(hand: Card[], _currentBid: Bid | null): CoachingAdvice {
+export function getBiddingAdvice(hand: Card[], currentBid: Bid | null): CoachingAdvice {
   const evaluation = evaluateHandStrength(hand);
   const hcp = evaluation.hcp;
 
@@ -16,11 +17,41 @@ export function getBiddingAdvice(hand: Card[], _currentBid: Bid | null): Coachin
     };
   }
 
-  const trumpLabel = evaluation.suggestedTrump === 'no-trump' ? 'No Trump' : evaluation.suggestedTrump;
+  // Find the lowest legal bid at or above the suggested trump
+  const preferredTrump = evaluation.suggestedTrump;
+  const trumpLabel = (t: TrumpChoice) => t === 'no-trump' ? 'No Trump' : t;
+
+  // Try preferred trump at suggested level first, then increase level until legal
+  const trumpsToTry: TrumpChoice[] = [preferredTrump, 'no-trump', 'spades', 'hearts', 'diamonds', 'clubs']
+    .filter((t, i, arr) => arr.indexOf(t) === i) as TrumpChoice[]; // deduplicate
+
+  for (let level = evaluation.suggestedLevel; level <= 7; level++) {
+    for (const trump of trumpsToTry) {
+      const candidate: Bid = { level, trump, playerId: '' };
+      if (isValidBid(candidate, currentBid)) {
+        // Check if this bid level is reasonable for our hand strength
+        if (level <= evaluation.suggestedLevel + 1) {
+          return {
+            action: `${level} ${trumpLabel(trump)}`,
+            explanation: `${hcp} HCP with ${evaluation.longestSuitLength}-card ${evaluation.longestSuit} suit. Total strength: ${evaluation.totalStrength}. Suggest bidding ${level} ${trumpLabel(trump)}.`,
+            confidence: hcp >= 14 && level === evaluation.suggestedLevel ? 'high' : 'medium',
+          };
+        }
+        // Bid would be too high for our hand — recommend pass
+        return {
+          action: 'pass',
+          explanation: `Your hand has ${hcp} HCP (strength ${evaluation.totalStrength}), but the lowest legal bid is ${level} ${trumpLabel(trump)} — too high for your hand. Better to pass.`,
+          confidence: 'high',
+        };
+      }
+    }
+  }
+
+  // No legal bid possible (shouldn't happen, but defensive)
   return {
-    action: `${evaluation.suggestedLevel} ${trumpLabel}`,
-    explanation: `${hcp} HCP with ${evaluation.longestSuitLength}-card ${evaluation.longestSuit} suit. Total strength: ${evaluation.totalStrength}. Suggest bidding ${evaluation.suggestedLevel} ${trumpLabel}.`,
-    confidence: hcp >= 14 ? 'high' : 'medium',
+    action: 'pass',
+    explanation: `Your hand has ${hcp} HCP but no legal bid is available. Pass.`,
+    confidence: 'high',
   };
 }
 
