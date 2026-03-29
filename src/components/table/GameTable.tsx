@@ -20,21 +20,33 @@ export function GameTable({ gameState, onCardClick }: GameTableProps) {
 
   const partnerRevealed = contract?.partnerId !== null;
   const partnerId = contract?.partnerId;
+  const declarerId = contract?.declarerId;
+
+  const playerNames: Record<string, string> = {};
+  for (const p of players) playerNames[p.id] = p.name;
+
+  const seatProps = (idx: number) => ({
+    player: players[idx],
+    isCurrentPlayer: currentPlayerIndex === idx,
+    isDeclarer: declarerId === players[idx].id,
+    isPartner: partnerId === players[idx].id,
+    partnerRevealed: partnerRevealed ?? false,
+  });
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <ContractInfo contract={contract} declarerTeamTricks={declarerTeamTricks} defenderTeamTricks={defenderTeamTricks} trickNumber={trickNumber} />
+      <ContractInfo contract={contract} declarerTeamTricks={declarerTeamTricks} defenderTeamTricks={defenderTeamTricks} trickNumber={trickNumber} playerNames={playerNames} />
       <div className="relative bg-green-900 rounded-xl p-8 min-w-80 min-h-64">
         <div className="flex justify-center mb-4">
-          <PlayerSeat player={players[2]} isCurrentPlayer={currentPlayerIndex === 2} isPartner={partnerId === players[2].id} partnerRevealed={partnerRevealed ?? false} />
+          <PlayerSeat {...seatProps(2)} />
         </div>
         <div className="flex items-center justify-between">
-          <PlayerSeat player={players[1]} isCurrentPlayer={currentPlayerIndex === 1} isPartner={partnerId === players[1].id} partnerRevealed={partnerRevealed ?? false} />
+          <PlayerSeat {...seatProps(1)} />
           <TrickArea trick={currentTrick} playerPositions={playerPositions} />
-          <PlayerSeat player={players[3]} isCurrentPlayer={currentPlayerIndex === 3} isPartner={partnerId === players[3].id} partnerRevealed={partnerRevealed ?? false} />
+          <PlayerSeat {...seatProps(3)} />
         </div>
         <div className="flex justify-center mt-4">
-          <PlayerSeat player={players[0]} isCurrentPlayer={currentPlayerIndex === 0} isPartner={partnerId === players[0].id} partnerRevealed={partnerRevealed ?? false} />
+          <PlayerSeat {...seatProps(0)} />
         </div>
       </div>
       <HandDisplay cards={human.hand} playableCards={playableCards} onCardClick={isHumanTurn ? onCardClick : undefined} />
